@@ -25,7 +25,6 @@ is_true()
 # Daemon paths
 DAEMON=/usr/sbin/glbd
 NAME=glbd
-USER=glb
 DESC="Galera Load Balancer"
 SCRIPTNAME=/etc/init.d/$NAME
 PIDFILE=/var/run/glbd.pid
@@ -56,11 +55,11 @@ do_start()
 		return 3
 	fi
 	start-stop-daemon --start --quiet \
-		--pidfile $PIDFILE --exec $DAEMON --name $NAME --user $USER \
+		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
 		--test > /dev/null \
 		|| return 1
 	start-stop-daemon --start --quiet \
-		--pidfile $PIDFILE --exec $DAEMON --name $NAME --user $USER \
+		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
 		-- --control 127.0.0.1:$CONTROL_PORT --threads $THREADS $LISTEN_PORT $TARGETS $DAEMON_OPTS \
 		|| return 2
 }
