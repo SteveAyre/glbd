@@ -9,7 +9,7 @@ with the following variables:
 	TARGETS
 	THREADS
 
-The format for a target is NAME:IP:PORT
+The format for a target is IP:PORT:WEIGHT
 
 START_DAEMON must be set to "true" for glbd to start automatically
 
@@ -23,8 +23,8 @@ On Debian the init.d script provides an interface to the control port.
 	invoke-rc.d glbd getinfo
 	invoke-rc.d glbd getstatus
 
-	invoke-rc.d glbd add TARGET
-	invoke-rc.d glbd remove TARGET
+	invoke-rc.d glbd add IP:PORT:WEIGHT
+	invoke-rc.d glbd remove IP:PORT
 
 See /usr/share/doc/glbd/README.gz for more information on the control port.
 
