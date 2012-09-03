@@ -22,8 +22,8 @@ Package: glbd-dbg
 Architecture: any
 Section: debug
 Priority: extra
-Depends: etlbmond (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
-Description: Debugging symbols for etlbmond
+Depends: glbd (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Debugging symbols for glbd
  GLB is a TCP load balancer similar to Pen. It lacks most of advanced Pen features,
  as the aim was to make a user-space TCP proxy which is as fast as possible. It can
  utilize multiple CPU cores. A list of destinations can be configured at runtime.
