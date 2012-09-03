@@ -27,13 +27,12 @@ DAEMON=/usr/sbin/glbd
 NAME=glbd
 DESC="Galera Load Balancer"
 SCRIPTNAME=/etc/init.d/$NAME
-PIDFILE=/var/run/glbd/glbd.pid
 test -x $DAEMON || exit 0
 
 # Defaults
 START_DAEMON="false"
 LISTEN_PORT="3307"
-FIFO="/var/run/glbd/glbd.sock"
+FIFO="/var/run/glbd.sock"
 CONTROL_PORT="3308"
 TARGETS="local:127.0.0.1:3306"
 THREADS="2"
@@ -60,19 +59,16 @@ do_start()
 
 	# Is glbd already running?
 	start-stop-daemon --start --quiet \
-		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
+		--exec $DAEMON --name $NAME \
 		--test > /dev/null \
 		|| return 1
-
-	# Prepare /var/run/glbd directory
-	test -e /var/run/glbd || install -m 755 -o daemon -g daemon -d /var/run/glbd
 
 	# glbd fails to start if the fifo already exists (eg if glbd crashed)
 	rm -f $FIFO
 
 	# Start daemon
 	start-stop-daemon --start --quiet \
-		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
+		--exec $DAEMON --name $NAME \
 		-- --daemon --control 127.0.0.1:$CONTROL_PORT --threads $THREADS --fifo $FIFO $LISTEN_PORT $TARGETS $DAEMON_OPTS > /dev/null \
 		|| return 2
 }
@@ -87,7 +83,7 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --name $NAME
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
@@ -98,8 +94,6 @@ do_stop()
 	# sleep for some time.
 	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
 	[ "$?" = 2 ] && return 2
-	# Many daemons don't delete their pidfiles when they exit.
-	rm -f $PIDFILE
 	return "$RETVAL"
 }
 
