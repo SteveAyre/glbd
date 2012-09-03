@@ -7,6 +7,9 @@ TMP:=$(CURDIR)/debian/tmp/
 %:
 	dh $@
 
+get-orig-source:
+	uscan --download-current-version --verbose
+
 override_dh_auto_install:
 	$(MAKE) install DESTDIR=$(TMP)/
 
