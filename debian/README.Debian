@@ -26,3 +26,5 @@ On Debian the init.d script provides an interface to the control port.
 	invoke-rc.d glbd add TARGET
 	invoke-rc.d glbd remove TARGET
 
+See /usr/share/doc/glbd/README.gz for more information on the control port.
+
