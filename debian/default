@@ -9,7 +9,7 @@ LISTEN_PORT="3307"
 CONTROL_PORT="3308"
 
 # The list of MySQL nodes to send requests to
-TARGETS="local:127.0.0.1:3306"
+TARGETS="127.0.0.1:3306:1"
 
 # Number of threads to run
 THREADS="2"
