@@ -5,6 +5,7 @@ Ports, threads and default targets are configured in /etc/default/glbd
 with the following variables:
 	START_DAEMON
 	LISTEN_PORT
+	FIFO
 	CONTROL_PORT
 	TARGETS
 	THREADS
