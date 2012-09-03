@@ -27,7 +27,7 @@ DAEMON=/usr/sbin/glbd
 NAME=glbd
 DESC="Galera Load Balancer"
 SCRIPTNAME=/etc/init.d/$NAME
-PIDFILE=/var/run/glbd.pid
+PIDFILE=/var/run/glbd/glbd.pid
 test -x $DAEMON || exit 0
 
 # Defaults
@@ -52,16 +52,27 @@ do_start()
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
 	#   3 if daemon is disabled
+
+	# Disabled?
 	if ! is_true $START_DAEMON; then
 		return 3
 	fi
+
+	# Is glbd already running?
 	start-stop-daemon --start --quiet \
 		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
 		--test > /dev/null \
 		|| return 1
-	rm -f $FIFO # glbd fails to start if the fifo already exists
+
+	# Prepare /var/run/glbd directory
+	test -e /var/run/glbd || install -m 755 -o nobody -g nobody -d /var/run/glbd
+
+	# glbd fails to start if the fifo already exists (eg if glbd crashed)
+	rm -f $FIFO
+
+	# Start daemon
 	start-stop-daemon --start --quiet \
-		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
+		--pidfile $PIDFILE --exec $DAEMON --name $NAME --user nobody \
 		-- --daemon --control 127.0.0.1:$CONTROL_PORT --threads $THREADS --fifo $FIFO $LISTEN_PORT $TARGETS $DAEMON_OPTS > /dev/null \
 		|| return 2
 }
