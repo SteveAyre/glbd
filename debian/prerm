@@ -1,0 +1,30 @@
+#!/bin/sh
+
+set -e
+test $DEBIAN_SCRIPT_DEBUG && set -v -x
+
+stop_glbd() {
+  if [ -x "/etc/init.d/glbd" ]; then
+          if [ -x /usr/sbin/invoke-rc.d ] ; then
+                  invoke-rc.d glbd stop
+          else
+                  /etc/init.d/glbd stop
+          fi
+  fi
+}
+
+
+case "$1" in
+  upgrade)
+    # don't stop glbd, it will be restarted after the upgrade
+    true
+  ;;
+  *)
+    stop_glbd
+  ;;
+esac
+
+#DEBHELPER#
+
+exit 0
+# vim:set ai et sts=2 sw=2 tw=0:
