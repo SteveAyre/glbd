@@ -33,6 +33,7 @@ test -x $DAEMON || exit 0
 # Defaults
 START_DAEMON="false"
 LISTEN_PORT="3307"
+FIFO="/var/run/glbd/glbd.sock"
 CONTROL_PORT="3308"
 TARGETS="local:127.0.0.1:3306"
 THREADS="2"
@@ -58,9 +59,10 @@ do_start()
 		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
 		--test > /dev/null \
 		|| return 1
+	rm -f $FIFO # glbd fails to start if the fifo already exists
 	start-stop-daemon --start --quiet \
 		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
-		-- --daemon --control 127.0.0.1:$CONTROL_PORT --threads $THREADS $LISTEN_PORT $TARGETS $DAEMON_OPTS > /dev/null \
+		-- --daemon --control 127.0.0.1:$CONTROL_PORT --threads $THREADS --fifo $FIFO $LISTEN_PORT $TARGETS $DAEMON_OPTS > /dev/null \
 		|| return 2
 }
 
