@@ -60,7 +60,7 @@ do_start()
 		|| return 1
 	start-stop-daemon --start --quiet \
 		--pidfile $PIDFILE --exec $DAEMON --name $NAME \
-		-- --control 127.0.0.1:$CONTROL_PORT --threads $THREADS $LISTEN_PORT $TARGETS $DAEMON_OPTS \
+		-- --daemon --control 127.0.0.1:$CONTROL_PORT --threads $THREADS $LISTEN_PORT $TARGETS $DAEMON_OPTS > /dev/null \
 		|| return 2
 }
 
