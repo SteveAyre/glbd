@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+
+#export DH_VERBOSE=1
+
+TMP:=$(CURDIR)/debian/tmp/
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	$(MAKE) install DESTDIR=$(TMP)/
+
+.PHONY: override_dh_strip
+override_dh_strip:
+	dh_strip --dbg-package=glbd-dbg
+

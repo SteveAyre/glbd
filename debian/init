@@ -1,0 +1,192 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:		glbd
+# Required-Start:	$network $local_fs
+# Required-Stop:	$network $local_fs
+# Default-Start:	2 3 4 5
+# Default-Stop:		
+# Short-Description:	GLB Galera Load Balancer
+# Description:		GLB is a TCP load balancer similar to Pen.
+### END INIT INFO
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+. /lib/lsb/init-functions
+
+is_true()
+{
+  case "${1:-}" in
+    [Yy]es|[Yy]|1|[Tt]|[Tt]rue) return 0;;
+    *) return 1;
+  esac
+}
+
+# Daemon paths
+DAEMON=/usr/sbin/glbd
+NAME=glbd
+USER=glb
+DESC="Galera Load Balancer"
+SCRIPTNAME=/etc/init.d/$NAME
+PIDFILE=/var/run/glbd.pid
+test -x $DAEMON || exit 0
+
+# Defaults
+START_DAEMON="false"
+LISTEN_PORT="3307"
+CONTROL_PORT="3308"
+TARGETS="local:127.0.0.1:3306"
+THREADS="2"
+DAEMON_OPTS=""
+
+# Reads config file (will override defaults above)
+[ -r /etc/default/glbd ] && . /etc/default/glbd
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+	# Return
+	#   0 if daemon has been started
+	#   1 if daemon was already running
+	#   2 if daemon could not be started
+	#   3 if daemon is disabled
+	if ! is_true $START_DAEMON; then
+		return 3
+	fi
+	start-stop-daemon --start --quiet \
+		--pidfile $PIDFILE --exec $DAEMON --name $NAME --user $USER \
+		--test > /dev/null \
+		|| return 1
+	start-stop-daemon --start --quiet \
+		--pidfile $PIDFILE --exec $DAEMON --name $NAME --user $USER \
+		-- --control 127.0.0.1:$CONTROL_PORT --threads $THREADS $LISTEN_PORT $TARGETS $DAEMON_OPTS \
+		|| return 2
+}
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+	# Return
+	#   0 if daemon has been stopped
+	#   1 if daemon was already stopped
+	#   2 if daemon could not be stopped
+	#   other if a failure occurred
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	RETVAL="$?"
+	[ "$RETVAL" = 2 ] && return 2
+	# Wait for children to finish too if this is a daemon that forks
+	# and if the daemon is only ever run from this initscript.
+	# If the above conditions are not satisfied then add some other code
+	# that waits for the process to drop all resources that could be
+	# needed by services started subsequently.  A last resort is to
+	# sleep for some time.
+	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
+	[ "$?" = 2 ] && return 2
+	# Many daemons don't delete their pidfiles when they exit.
+	rm -f $PIDFILE
+	return "$RETVAL"
+}
+
+getinfo()
+{
+	echo getinfo | nc 127.0.0.1 $CONTROL_PORT && exit 0
+	echo "$NAME: failed to query 'getinfo' from 127.0.0.1:$CONTROL_PORT"
+	exit -1
+}
+
+getstats() {
+	echo getstats | nc 127.0.0.1 $CONTROL_PORT && exit 0
+	echo "$NAME: failed to query 'getstats' from 127.0.0.1:$CONTROL_PORT"
+	exit -1
+}
+
+add_target()
+{
+	TARGET=$1
+	if [ -z "$TARGET" ]; then
+		echo "Usage: $SCRIPTNAME add :[:]"
+		exit -1
+	fi
+	RESULT=`echo "$TARGET" | nc 127.0.0.1 $CONTROL_PORT`
+	if [ "$RESULT" == "Ok" ]; then
+		echo "$NAME: added '$TARGET' successfully"
+		exit 0
+	fi
+	echo "$NAME: failed to add target '$TARGET'."
+	exit -1
+}
+
+remove_target()
+{
+	TARGET=$1
+	if [ -z "$TARGET" ]; then
+		echo "Usage: $SCRIPTNAME remove :"
+		exit -1
+	fi
+	RESULT=`echo "$TARGET:-1" | nc 127.0.0.1 $CONTROL_PORT`
+	if [ "$RESULT" == "Ok" ]; then
+		echo "$NAME: removd '$TARGET' successfully"
+		exit 0
+	fi
+	echo "$NAME: failed to remove target '$TARGET'."
+	exit -1
+}
+
+case $1 in
+	start)
+		[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+		do_start
+		case "$?" in
+			0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+			2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+		esac
+		;;
+	stop)
+		[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+		do_stop
+		case "$?" in
+			0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+			2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+		esac
+		;;
+	status)
+		status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
+		;;
+	reload|restart)
+		log_daemon_msg "Restarting $DESC" "$NAME"
+		do_stop
+		case "$?" in
+			0|1)
+			do_start
+			case "$?" in
+				0) log_end_msg 0 ;;
+				1) log_end_msg 1 ;; # Old process is still running
+				*) log_end_msg 1 ;; # Failed to start
+			esac
+			;;
+		*)
+			# Failed to stop
+			log_end_msg 1
+			;;
+		esac
+	getinfo)
+		getinfo
+		;;
+	getstats)
+		getstats
+		;;
+	add)
+		add_target $2
+		;;
+	remove)
+		remove_target $2
+		;;
+	*)
+		echo "Usage: $SCRIPTNAME {start|stop|reload|restart|status|getstats|getinfo|add|remove}" >&2
+		exit 2
+esac
+

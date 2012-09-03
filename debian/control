@@ -1,0 +1,34 @@
+Source: glbd
+Section: database
+Priority: extra
+Maintainer: Steven Ayre <steveayre@gmail.com>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.3
+Homepage: http://codership.com/products/galera-load-balancer
+
+Package: glbd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, netcat
+Description: Galera Load Balancer
+ GLB is a TCP load balancer similar to Pen. It lacks most of advanced Pen features,
+ as the aim was to make a user-space TCP proxy which is as fast as possible. It can
+ utilize multiple CPU cores. A list of destinations can be configured at runtime.
+ Destination "draining" is supported. It features weight-based connection balancing
+ (which becomes round-robin if weights are equal).
+ .
+ This package contains the glbd daemon.
+
+Package: glbd-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: etlbmond (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Debugging symbols for etlbmond
+ GLB is a TCP load balancer similar to Pen. It lacks most of advanced Pen features,
+ as the aim was to make a user-space TCP proxy which is as fast as possible. It can
+ utilize multiple CPU cores. A list of destinations can be configured at runtime.
+ Destination "draining" is supported. It features weight-based connection balancing
+ (which becomes round-robin if weights are equal).
+ .
+ This package contains the debugging symbols for glbd.
+
