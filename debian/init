@@ -65,7 +65,7 @@ do_start()
 		|| return 1
 
 	# Prepare /var/run/glbd directory
-	test -e /var/run/glbd || install -m 755 -o nobody -g nobody -d /var/run/glbd
+	test -e /var/run/glbd || install -m 755 -o nobody -g nogroup -d /var/run/glbd
 
 	# glbd fails to start if the fifo already exists (eg if glbd crashed)
 	rm -f $FIFO
