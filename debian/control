@@ -5,6 +5,8 @@ Maintainer: Steven Ayre <steveayre@gmail.com>
 Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.3
 Homepage: http://codership.com/products/galera-load-balancer
+Vcs-Browser: https://github.com/SteveAyre/glbd
+Vcs-Git: git://github.com/SteveAyre/glbd.git
 
 Package: glbd
 Architecture: any
