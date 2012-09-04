@@ -8,9 +8,9 @@ test $DEBIAN_SCRIPT_DEBUG && set -v -x
 
 if [ -x "/etc/init.d/glbd" ]; then
 	if [ -x /usr/sbin/invoke-rc.d ]; then
-	   invoke-rc.d glbd cond-restart || invoke-rc.d glbd restart
+	   invoke-rc.d glbd restart
 	else
-	   /etc/init.d/glbd cond-restart || /etc/init.d/glbd restart
+	   /etc/init.d/glbd restart
 	fi
 fi
 
