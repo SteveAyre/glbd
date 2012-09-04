@@ -32,7 +32,7 @@ test -x $DAEMON || exit 0
 # Defaults
 START_DAEMON="false"
 LISTEN_PORT="3307"
-FIFO="/var/run/glbd/glbd.sock"
+FIFO="/var/run/glbd/glbd.fifo"
 CONTROL_PORT="3308"
 TARGETS="local:127.0.0.1:3306"
 THREADS="2"
