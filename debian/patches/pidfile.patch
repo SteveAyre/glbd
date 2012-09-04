@@ -1,6 +1,6 @@
-diff -urNaad glb-0.7.5.orig/src/glb_cmd.c glb-0.7.5/src/glb_cmd.c
---- glb-0.7.5.orig/src/glb_cmd.c	2012-09-04 10:24:29.118171095 +0100
-+++ glb-0.7.5/src/glb_cmd.c	2012-09-04 10:29:05.514750415 +0100
+diff -urNad glb-0.7.5.orig/src/glb_cmd.c glb-0.7.5/src/glb_cmd.c
+--- glb-0.7.5.orig/src/glb_cmd.c	2012-09-04 11:01:52.181065125 +0100
++++ glb-0.7.5/src/glb_cmd.c	2012-09-04 11:02:47.565039963 +0100
 @@ -30,6 +30,7 @@
      CMD_OPT_CONTROL      = 'c',
      CMD_OPT_DAEMON       = 'd',
@@ -60,9 +60,9 @@ diff -urNaad glb-0.7.5.orig/src/glb_cmd.c glb-0.7.5/src/glb_cmd.c
          ret->fifo_name = tmp.fifo_name;
          ret->n_threads = tmp.n_threads;
          ret->verbose   = tmp.verbose;
-diff -urNaad glb-0.7.5.orig/src/glb_cmd.h glb-0.7.5/src/glb_cmd.h
---- glb-0.7.5.orig/src/glb_cmd.h	2012-09-04 10:24:29.118171095 +0100
-+++ glb-0.7.5/src/glb_cmd.h	2012-09-04 10:29:40.707545919 +0100
+diff -urNad glb-0.7.5.orig/src/glb_cmd.h glb-0.7.5/src/glb_cmd.h
+--- glb-0.7.5.orig/src/glb_cmd.h	2012-09-04 11:01:52.181065125 +0100
++++ glb-0.7.5/src/glb_cmd.h	2012-09-04 11:02:47.565039963 +0100
 @@ -18,6 +18,7 @@
      glb_sockaddr_t inc_addr;     // IP to bind listener for incoming connecitons
      glb_sockaddr_t ctrl_addr;    // network control interface
@@ -71,17 +71,17 @@ diff -urNaad glb-0.7.5.orig/src/glb_cmd.h glb-0.7.5/src/glb_cmd.h
      const char*    fifo_name;    // FIFO file name
      long           n_threads;    // number of routing threads (1 .. oo)
      bool           src_tracking; // connect to the same dst for the same src?
-diff -urNaad glb-0.7.5.orig/src/glb_daemon.c glb-0.7.5/src/glb_daemon.c
---- glb-0.7.5.orig/src/glb_daemon.c	2012-09-04 10:24:29.106176278 +0100
-+++ glb-0.7.5/src/glb_daemon.c	2012-09-04 10:33:23.111458893 +0100
-@@ -29,7 +29,23 @@
+diff -urNad glb-0.7.5.orig/src/glb_daemon.c glb-0.7.5/src/glb_daemon.c
+--- glb-0.7.5.orig/src/glb_daemon.c	2012-09-04 11:01:52.173065129 +0100
++++ glb-0.7.5/src/glb_daemon.c	2012-09-04 11:03:07.749030865 +0100
+@@ -29,7 +29,26 @@
  
  #define CHILD_OK_TIMEOUT 5
  
 -void glb_daemon_start()
 +void glb_daemon_pidfile(const char *pidfile, pid_t pid)
 +{
-+	int fd;
++	int fd, r;
 +	char buffer[100];
 +
 +	if (!pidfile) return;
@@ -89,9 +89,12 @@ diff -urNaad glb-0.7.5.orig/src/glb_daemon.c glb-0.7.5/src/glb_daemon.c
 +	snprintf(buffer, sizeof(buffer), "%d\n", pid);
 +
 +	if ((fd = open(pidfile, O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
++		syslog(LOG_ERR, "unable to open pidfile, code %d (%s)", errno, strerror(errno));
 +		return;
 +	}
-+	write(fd, buffer, strlen(buffer));
++	if (write(fd, buffer, strlen(buffer)) < 0) {
++		syslog(LOG_ERR, "unable to write to pidfile, code %d (%s)", errno, strerror(errno));
++	}
 +	close(fd);
 +}
 +
@@ -99,7 +102,7 @@ diff -urNaad glb-0.7.5.orig/src/glb_daemon.c glb-0.7.5/src/glb_daemon.c
  {
      pid_t pid, sid;
  
-@@ -55,6 +71,9 @@
+@@ -55,6 +74,9 @@
  
      /* If we got a good PID, then we can exit the parent process. */
      if (pid > 0) {
@@ -109,9 +112,9 @@ diff -urNaad glb-0.7.5.orig/src/glb_daemon.c glb-0.7.5/src/glb_daemon.c
          /* Wait for confirmation from the child via GLB_SIGNAL_OK, or
             for SIGALRM.  If pause() returns - it means timeout. */
          alarm(CHILD_OK_TIMEOUT);
-diff -urNaad glb-0.7.5.orig/src/glb_daemon.h glb-0.7.5/src/glb_daemon.h
---- glb-0.7.5.orig/src/glb_daemon.h	2012-09-04 10:24:29.106176278 +0100
-+++ glb-0.7.5/src/glb_daemon.h	2012-09-04 10:30:31.505599353 +0100
+diff -urNad glb-0.7.5.orig/src/glb_daemon.h glb-0.7.5/src/glb_daemon.h
+--- glb-0.7.5.orig/src/glb_daemon.h	2012-09-04 11:01:52.173065129 +0100
++++ glb-0.7.5/src/glb_daemon.h	2012-09-04 11:02:47.573039960 +0100
 @@ -8,7 +8,7 @@
  #define _glb_daemon_h_
  
@@ -121,9 +124,9 @@ diff -urNaad glb-0.7.5.orig/src/glb_daemon.h glb-0.7.5/src/glb_daemon.h
  
  extern void
  glb_daemon_ok();
-diff -urNaad glb-0.7.5.orig/src/glb_main.c glb-0.7.5/src/glb_main.c
---- glb-0.7.5.orig/src/glb_main.c	2012-09-04 10:24:29.114172822 +0100
-+++ glb-0.7.5/src/glb_main.c	2012-09-04 10:30:19.266886919 +0100
+diff -urNad glb-0.7.5.orig/src/glb_main.c glb-0.7.5/src/glb_main.c
+--- glb-0.7.5.orig/src/glb_main.c	2012-09-04 11:01:52.177065127 +0100
++++ glb-0.7.5/src/glb_main.c	2012-09-04 11:02:47.573039960 +0100
 @@ -41,7 +41,7 @@
      glb_signal_set_handler();
  
