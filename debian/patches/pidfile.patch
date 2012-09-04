@@ -1,0 +1,135 @@
+diff -urNaad glb-0.7.5.orig/src/glb_cmd.c glb-0.7.5/src/glb_cmd.c
+--- glb-0.7.5.orig/src/glb_cmd.c	2012-09-04 10:24:29.118171095 +0100
++++ glb-0.7.5/src/glb_cmd.c	2012-09-04 10:29:05.514750415 +0100
+@@ -30,6 +30,7 @@
+     CMD_OPT_CONTROL      = 'c',
+     CMD_OPT_DAEMON       = 'd',
+     CMD_OPT_FIFO         = 'f',
++    CMD_OPT_PIDFILE      = 'p',
+     CMD_OPT_HELP         = 'h',
+     CMD_OPT_SRC_TRACKING = 's',
+     CMD_OPT_N_THREADS    = 't',
+@@ -42,6 +43,7 @@
+     { "control",         RA, NULL, CMD_OPT_CONTROL       },
+     { "daemon",          NA, NULL, CMD_OPT_DAEMON        },
+     { "fifo",            RA, NULL, CMD_OPT_FIFO          },
++    { "pidfile",         RA, NULL, CMD_OPT_PIDFILE       },
+     { "help",            NA, NULL, CMD_OPT_HELP          },
+     { "src_tracking",    NA, NULL, CMD_OPT_SRC_TRACKING  },
+     { "source_tracking", NA, NULL, CMD_OPT_SRC_TRACKING  },
+@@ -65,6 +67,8 @@
+     fprintf (out,
+              "  --daemon                run as a daemon.\n");
+     fprintf (out,
++             "  --pidfile <path>        path of the PID file.\n");
++    fprintf (out,
+              "  --fifo <fifo name>      name of the FIFO file for control.\n");
+     fprintf (out,
+              "  --control [HOST:]PORT   "
+@@ -190,6 +194,7 @@
+ // General defaults
+ static const char  cmd_inc_addr_default[]   = "0.0.0.0";
+ static const char  cmd_ctrl_addr_default[]  = "127.0.0.1";
++static const char  cmd_pidfile_default[]    = "/tmp/glbd.pid";
+ static const char  cmd_fifo_name_default[]  = "/tmp/glbd.fifo";
+ static const ulong cmd_min_threads          = 1;
+ 
+@@ -206,6 +211,7 @@
+ 
+     // Set defaults
+     tmp.ctrl_set     = false;
++    tmp.pidfile      = cmd_pidfile_default;
+     tmp.fifo_name    = cmd_fifo_name_default;
+     tmp.n_threads    = cmd_min_threads;
+     tmp.src_tracking = false;
+@@ -226,6 +232,9 @@
+                 return NULL;
+             tmp.ctrl_set = true;
+             break;
++        case CMD_OPT_PIDFILE:
++            tmp.pidfile = optarg;
++            break;
+         case CMD_OPT_FIFO:
+             tmp.fifo_name = optarg;
+             break;
+@@ -301,6 +310,7 @@
+         ret->inc_addr  = tmp.inc_addr;
+         ret->ctrl_addr = tmp.ctrl_addr;
+         ret->ctrl_set  = tmp.ctrl_set;
++        ret->pidfile   = tmp.pidfile;
+         ret->fifo_name = tmp.fifo_name;
+         ret->n_threads = tmp.n_threads;
+         ret->verbose   = tmp.verbose;
+diff -urNaad glb-0.7.5.orig/src/glb_cmd.h glb-0.7.5/src/glb_cmd.h
+--- glb-0.7.5.orig/src/glb_cmd.h	2012-09-04 10:24:29.118171095 +0100
++++ glb-0.7.5/src/glb_cmd.h	2012-09-04 10:29:40.707545919 +0100
+@@ -18,6 +18,7 @@
+     glb_sockaddr_t inc_addr;     // IP to bind listener for incoming connecitons
+     glb_sockaddr_t ctrl_addr;    // network control interface
+     bool           ctrl_set;     // was set? (false)
++    const char*    pidfile;      // PID file path
+     const char*    fifo_name;    // FIFO file name
+     long           n_threads;    // number of routing threads (1 .. oo)
+     bool           src_tracking; // connect to the same dst for the same src?
+diff -urNaad glb-0.7.5.orig/src/glb_daemon.c glb-0.7.5/src/glb_daemon.c
+--- glb-0.7.5.orig/src/glb_daemon.c	2012-09-04 10:24:29.106176278 +0100
++++ glb-0.7.5/src/glb_daemon.c	2012-09-04 10:33:23.111458893 +0100
+@@ -29,7 +29,23 @@
+ 
+ #define CHILD_OK_TIMEOUT 5
+ 
+-void glb_daemon_start()
++void glb_daemon_pidfile(const char *pidfile, pid_t pid)
++{
++	int fd;
++	char buffer[100];
++
++	if (!pidfile) return;
++
++	snprintf(buffer, sizeof(buffer), "%d\n", pid);
++
++	if ((fd = open(pidfile, O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
++		return;
++	}
++	write(fd, buffer, strlen(buffer));
++	close(fd);
++}
++
++void glb_daemon_start(const char *pidfile)
+ {
+     pid_t pid, sid;
+ 
+@@ -55,6 +71,9 @@
+ 
+     /* If we got a good PID, then we can exit the parent process. */
+     if (pid > 0) {
++        /* Create a PID file */
++        glb_daemon_pidfile(pidfile, pid);
++
+         /* Wait for confirmation from the child via GLB_SIGNAL_OK, or
+            for SIGALRM.  If pause() returns - it means timeout. */
+         alarm(CHILD_OK_TIMEOUT);
+diff -urNaad glb-0.7.5.orig/src/glb_daemon.h glb-0.7.5/src/glb_daemon.h
+--- glb-0.7.5.orig/src/glb_daemon.h	2012-09-04 10:24:29.106176278 +0100
++++ glb-0.7.5/src/glb_daemon.h	2012-09-04 10:30:31.505599353 +0100
+@@ -8,7 +8,7 @@
+ #define _glb_daemon_h_
+ 
+ extern void
+-glb_daemon_start();
++glb_daemon_start(const char *pidfile);
+ 
+ extern void
+ glb_daemon_ok();
+diff -urNaad glb-0.7.5.orig/src/glb_main.c glb-0.7.5/src/glb_main.c
+--- glb-0.7.5.orig/src/glb_main.c	2012-09-04 10:24:29.114172822 +0100
++++ glb-0.7.5/src/glb_main.c	2012-09-04 10:30:19.266886919 +0100
+@@ -41,7 +41,7 @@
+     glb_signal_set_handler();
+ 
+     if (cmd->daemonize) {
+-        glb_daemon_start();
++        glb_daemon_start(cmd->pidfile);
+         // at this point we're a child process
+     }
+ 

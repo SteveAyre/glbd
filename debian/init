@@ -32,6 +32,7 @@ test -x $DAEMON || exit 0
 # Defaults
 START_DAEMON="false"
 LISTEN_PORT="3307"
+PIDFILE="/var/run/glbd/glbd.pid"
 FIFO="/var/run/glbd/glbd.fifo"
 CONTROL_PORT="3308"
 TARGETS="local:127.0.0.1:3306"
@@ -58,9 +59,7 @@ do_start()
 	fi
 
 	# Is glbd already running?
-	start-stop-daemon --start --quiet \
-		--exec $DAEMON --name $NAME \
-		--test > /dev/null \
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --name $NAME --test > /dev/null \
 		|| return 1
 
 	# Create a directory owned by the daemon user to create the fifo in
@@ -71,9 +70,8 @@ do_start()
 	rm -f $FIFO
 
 	# Start daemon
-	start-stop-daemon --start --quiet \
-		--exec $DAEMON --name $NAME \
-		-- --daemon --control 127.0.0.1:$CONTROL_PORT --threads $THREADS --fifo $FIFO $LISTEN_PORT $TARGETS $DAEMON_OPTS > /dev/null \
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --name $NAME -- \
+		--daemon --threads $THREADS --pidfile $PIDFILE --control 127.0.0.1:$CONTROL_PORT --fifo $FIFO $LISTEN_PORT $TARGETS $DAEMON_OPTS > /dev/null \
 		|| return 2
 }
 
@@ -87,7 +85,7 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --user daemon --name $NAME
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pid-file $PIDFILE --name $NAME
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
@@ -98,6 +96,8 @@ do_stop()
 	# sleep for some time.
 	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
 	[ "$?" = 2 ] && return 2
+	# Many daemons don't delete their pidfiles when they exit.
+	rm -f $PIDFILE
 	return "$RETVAL"
 }
 
