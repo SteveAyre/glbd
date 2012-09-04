@@ -1,3 +1,6 @@
+From: Steven Ayre <steveayre@gmail.com>
+Description: Adds --pidfile option and creates PID when daemonising.
+
 diff -urNad glb-0.7.5.orig/src/glb_cmd.c glb-0.7.5/src/glb_cmd.c
 --- glb-0.7.5.orig/src/glb_cmd.c	2012-09-04 11:01:52.181065125 +0100
 +++ glb-0.7.5/src/glb_cmd.c	2012-09-04 11:02:47.565039963 +0100

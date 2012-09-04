@@ -1,6 +1,13 @@
+glbd (0.7.5-2) unstable; urgency=low
+
+  * Fixes lintian errors
+
+ -- Steven Ayre <steveayre@gmail.com>  Tue, 04 Sep 2012 13:12:25 +0100
+
 glbd (0.7.5-1) unstable; urgency=low
 
-  * Initial release (Closes #562666)
+  * Initial release (Closes: #562666)
 
  -- Steven Ayre <steveayre@gmail.com>  Tue, 04 Sep 2012 12:42:22 +0100
+
 
