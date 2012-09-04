@@ -6,7 +6,7 @@
 LISTEN_PORT="3307"
 
 # The FIFO to accept MySQL connections on
-FIFO="/var/run/glbd/glbd.sock"
+FIFO="/var/run/glbd.sock"
 
 # The TCP port for controlling the glbd daemon at runtime
 CONTROL_PORT="3308"
