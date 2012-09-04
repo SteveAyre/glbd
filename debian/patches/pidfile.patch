@@ -42,6 +42,15 @@ diff -urNad glb-0.7.5.orig/src/glb_cmd.c glb-0.7.5/src/glb_cmd.c
      tmp.fifo_name    = cmd_fifo_name_default;
      tmp.n_threads    = cmd_min_threads;
      tmp.src_tracking = false;
+@@ -213,7 +219,7 @@
+     tmp.daemonize    = false;
+ 
+     // parse options
+-    while ((opt = getopt_long (argc, argv, "c:dfht:svV", cmd_options, &opt_idx))
++    while ((opt = getopt_long (argc, argv, "c:dp:f:ht:svV", cmd_options, &opt_idx))
+            != -1) {
+         switch (opt) {
+         case '?':
 @@ -226,6 +232,9 @@
                  return NULL;
              tmp.ctrl_set = true;
