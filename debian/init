@@ -167,17 +167,17 @@ case $1 in
 		do_stop
 		case "$?" in
 			0|1)
-			do_start
-			case "$?" in
-				0) log_end_msg 0 ;;
-				1) log_end_msg 1 ;; # Old process is still running
-				*) log_end_msg 1 ;; # Failed to start
-			esac
-			;;
-		*)
-			# Failed to stop
-			log_end_msg 1
-			;;
+				do_start
+				case "$?" in
+					0) log_end_msg 0 ;;
+					1) log_end_msg 1 ;; # Old process is still running
+					*) log_end_msg 1 ;; # Failed to start
+				esac
+				;;
+			*)
+				# Failed to stop
+				log_end_msg 1
+				;;
 		esac
 		;;
 	getinfo)
