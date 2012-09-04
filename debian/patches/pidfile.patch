@@ -81,7 +81,7 @@ diff -urNad glb-0.7.5.orig/src/glb_daemon.c glb-0.7.5/src/glb_daemon.c
 -void glb_daemon_start()
 +void glb_daemon_pidfile(const char *pidfile, pid_t pid)
 +{
-+	int fd, r;
++	int fd;
 +	char buffer[100];
 +
 +	if (!pidfile) return;
