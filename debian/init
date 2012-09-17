@@ -101,17 +101,32 @@ do_stop()
 	return "$RETVAL"
 }
 
+#
+# Function that runs netcat commands towards the service
+#
+do_netcat() {
+	# check input param
+	[ -z "$1" ] && return 1
+
+	cmd="$1"
+	IFS= nc_out=`echo ${cmd} | /bin/netcat -q1 127.0.0.1 $CONTROL_PORT`
+	rc=$?
+
+	return $rc
+
+}
+
 getinfo()
 {
-	echo getinfo | nc 127.0.0.1 $CONTROL_PORT && exit 0
+	do_netcat "getinfo" && echo $nc_out && exit 0
 	echo "$NAME: failed to query 'getinfo' from 127.0.0.1:$CONTROL_PORT"
-	exit -1
+	exit 1
 }
 
 getstats() {
-	echo getstats | nc 127.0.0.1 $CONTROL_PORT && exit 0
+	do_netcat "getstats" && echo $nc_out && exit 0
 	echo "$NAME: failed to query 'getstats' from 127.0.0.1:$CONTROL_PORT"
-	exit -1
+	exit 1
 }
 
 add_target()
@@ -119,15 +134,16 @@ add_target()
 	TARGET=$1
 	if [ -z "$TARGET" ]; then
 		echo "Usage: $SCRIPTNAME add :[:]"
-		exit -1
+		exit 1
 	fi
-	RESULT=`echo "$TARGET" | nc 127.0.0.1 $CONTROL_PORT`
-	if [ "$RESULT" == "Ok" ]; then
+
+	do_netcat "${TARGET}"
+	if [ "$nc_out" = "Ok" ]; then
 		echo "$NAME: added '$TARGET' successfully"
 		exit 0
 	fi
 	echo "$NAME: failed to add target '$TARGET'."
-	exit -1
+	exit 1
 }
 
 remove_target()
@@ -135,15 +151,16 @@ remove_target()
 	TARGET=$1
 	if [ -z "$TARGET" ]; then
 		echo "Usage: $SCRIPTNAME remove :"
-		exit -1
+		exit 1
 	fi
-	RESULT=`echo "$TARGET:-1" | nc 127.0.0.1 $CONTROL_PORT`
-	if [ "$RESULT" == "Ok" ]; then
+	
+	do_netcat "$TARGET:-1"
+	if [ "$nc_out" = "Ok" ]; then
 		echo "$NAME: removd '$TARGET' successfully"
 		exit 0
 	fi
 	echo "$NAME: failed to remove target '$TARGET'."
-	exit -1
+	exit 1
 }
 
 case $1 in
